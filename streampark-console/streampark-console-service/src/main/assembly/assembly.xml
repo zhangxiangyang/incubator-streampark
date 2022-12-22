@@ -20,7 +20,7 @@
         <format>tar.gz</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
-    <baseDirectory>apache-streampark_${scala.binary.version}-${project.version}-bin</baseDirectory>
+    <baseDirectory>apache-streampark_${scala.binary.version}-${project.version}-incubating-bin</baseDirectory>
 
     <dependencySets>
         <dependencySet>
@@ -55,7 +55,7 @@
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/../src/assembly/bin</directory>
+            <directory>${project.build.directory}/../src/main/assembly/bin</directory>
             <outputDirectory>bin</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
@@ -70,27 +70,27 @@
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/../src/assembly/logs</directory>
+            <directory>${project.build.directory}/../src/main/assembly/logs</directory>
             <outputDirectory>logs</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/../src/assembly/temp</directory>
+            <directory>${project.build.directory}/../src/main/assembly/temp</directory>
             <outputDirectory>temp</outputDirectory>
             <fileMode>0777</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/../src/assembly/client</directory>
+            <directory>${project.build.directory}/../src/main/assembly/client</directory>
             <outputDirectory>client</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/../src/assembly/plugins</directory>
+            <directory>${project.build.directory}/../src/main/assembly/plugins</directory>
             <outputDirectory>plugins</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/../src/assembly/script</directory>
+            <directory>${project.build.directory}/../src/main/assembly/script</directory>
             <outputDirectory>script</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
@@ -103,6 +103,18 @@
                 <include>*.properties</include>
                 <include>logback*.xml</include>
             </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/../../../</directory>
+            <outputDirectory/>
+            <includes>
+                <include>README.md</include>
+                <include>DISCLAIMER</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/../../../dist-material/release-docs</directory>
+            <outputDirectory/>
         </fileSet>
     </fileSets>
 </assembly>

@@ -28,6 +28,7 @@ export default {
   jobType: 'Job Type',
   developmentMode: 'Development Mode',
   executionMode: 'Execution Mode',
+  historyVersion: 'History Version',
   dependency: 'Dependency',
   appConf: 'Application Conf',
   resolveOrder: 'resolveOrder',
@@ -201,7 +202,7 @@ export default {
     appNameExistsInK8sMessage:
       'The application name is already exists in Kubernetes,cannot be repeated. Please check',
     appNameNotValid:
-      'The application name is invalid.characters must be (Chinese|English|"-"|"_"),two consecutive spaces cannot appear.Please check',
+      'The application name is invalid, must be (Chinese or English or "-" or "_"), two consecutive spaces cannot appear.Please check',
     flinkClusterIsRequiredMessage: 'Flink Cluster is required',
     flinkSqlIsRequiredMessage: 'Flink SQL is required',
     tagsPlaceholder: 'Please enter tags,if more than one, separate them with commas(,)',
@@ -216,7 +217,7 @@ export default {
     kubernetesNamespacePlaceholder: 'Please enter kubernetes Namespace, e.g: default',
     kubernetesClusterIdPlaceholder: 'Please enter Kubernetes clusterId',
     kubernetesClusterIdRequire:
-      "lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character",
+      "lower case alphanumeric characters, '-', and must start and end with an alphanumeric character,and no more than 45 characters",
     kubernetesClusterIdIsRequiredMessage: 'Kubernetes clusterId is required',
     flinkImagePlaceholder:
       'Please enter the tag of Flink base docker image, such as: flink:1.13.0-scala_2.11-java8',

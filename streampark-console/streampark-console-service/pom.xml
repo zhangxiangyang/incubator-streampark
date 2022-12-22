@@ -556,7 +556,7 @@
                                     <attach>false</attach>
                                     <finalName>apache-streampark_${scala.binary.version}-${project.version}-incubating-bin</finalName>
                                     <descriptors>
-                                        <descriptor>${project.basedir}/src/assembly/assembly.xml</descriptor>
+                                        <descriptor>${basedir}/src/main/assembly/assembly.xml</descriptor>
                                     </descriptors>
                                 </configuration>
                             </execution>
@@ -636,13 +636,41 @@
                                     <attach>false</attach>
                                     <finalName>apache-streampark_${scala.binary.version}-${project.version}-incubating-bin</finalName>
                                     <descriptors>
-                                        <descriptor>${project.basedir}/src/assembly/assembly.xml</descriptor>
+                                        <descriptor>${basedir}/src/main/assembly/assembly.xml</descriptor>
                                     </descriptors>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
 
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>dist</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <copy
+                                            file="${project.build.directory}/apache-streampark_${scala.binary.version}-${project.version}-incubating-bin.tar.gz"
+                                            tofile="${project.basedir}/../../dist/apache-streampark_${scala.binary.version}-${project.version}-incubating-bin.tar.gz"
+                                            overwrite="true" />
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -684,11 +712,6 @@
                         </fileset>
                     </filesets>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
             </plugin>
 
         </plugins>
