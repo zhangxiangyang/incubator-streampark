@@ -56,6 +56,7 @@ trait FlinkSubmitTrait extends Logger {
   private[submit] lazy val PARAM_KEY_APP_NAME = KEY_APP_NAME("--")
   private[submit] lazy val PARAM_KEY_FLINK_PARALLELISM = KEY_FLINK_PARALLELISM("--")
 
+
   @throws[Exception] def submit(submitRequest: SubmitRequest): SubmitResponse = {
     logInfo(
       s"""
@@ -69,7 +70,6 @@ trait FlinkSubmitTrait extends Logger {
          |    flinkExposedType : ${submitRequest.k8sSubmitParam.flinkRestExposedType}
          |    clusterId        : ${submitRequest.k8sSubmitParam.clusterId}
          |    applicationType  : ${submitRequest.applicationType.getName}
-         |    flameGraph       : ${submitRequest.flameGraph != null}
          |    savePoint        : ${submitRequest.savePoint}
          |    properties       : ${submitRequest.properties.mkString(" ")}
          |    args             : ${submitRequest.args}
@@ -106,9 +106,33 @@ trait FlinkSubmitTrait extends Logger {
       flinkConfig.setBoolean(SavepointConfigOptions.SAVEPOINT_IGNORE_UNCLAIMED_STATE, submitRequest.allowNonRestoredState)
     }
 
+    // set JVMOptions..
+    setJvmOptions(submitRequest, flinkConfig)
+
     setConfig(submitRequest, flinkConfig)
 
     doSubmit(submitRequest, flinkConfig)
+
+  }
+
+  def setJvmOptions(submitRequest: SubmitRequest, flinkConfig: Configuration): Unit = {
+    if (MapUtils.isNotEmpty(submitRequest.properties)) {
+      submitRequest.properties.foreach(x => {
+        val k = x._1.trim
+        val v = x._2.toString
+        if (k == CoreOptions.FLINK_JVM_OPTIONS.key()) {
+          flinkConfig.set(CoreOptions.FLINK_JVM_OPTIONS, v)
+        } else if (k == CoreOptions.FLINK_JM_JVM_OPTIONS.key()) {
+          flinkConfig.set(CoreOptions.FLINK_JM_JVM_OPTIONS, v)
+        } else if (k == CoreOptions.FLINK_HS_JVM_OPTIONS.key()) {
+          flinkConfig.set(CoreOptions.FLINK_HS_JVM_OPTIONS, v)
+        } else if (k == CoreOptions.FLINK_TM_JVM_OPTIONS.key()) {
+          flinkConfig.set(CoreOptions.FLINK_TM_JVM_OPTIONS, v)
+        } else if (k == CoreOptions.FLINK_CLI_JVM_OPTIONS.key()) {
+          flinkConfig.set(CoreOptions.FLINK_CLI_JVM_OPTIONS, v)
+        }
+      })
+    }
   }
 
   def setConfig(submitRequest: SubmitRequest, flinkConf: Configuration): Unit
@@ -186,16 +210,6 @@ trait FlinkSubmitTrait extends Logger {
   }
 
   //----------Public Method end ------------------
-
-  private[submit] lazy val jvmProfilerJar: String = {
-    val pluginsPath = SystemPropertyUtils.get(ConfigConst.KEY_APP_HOME).concat("/plugins")
-    val pluginsDir = new File(pluginsPath)
-    pluginsDir.list().filter(_.matches("streampark-jvm-profiler-.*\\.jar")) match {
-      case Array() => throw new IllegalArgumentException(s"[StreamPark] can no found streampark-jvm-profiler jar in $pluginsPath")
-      case array if array.length == 1 => array.head
-      case more => throw new IllegalArgumentException(s"[StreamPark] found multiple streampark-jvm-profiler jar in $pluginsPath,[${more.mkString(",")}]")
-    }
-  }
 
   private[submit] def validateAndGetActiveCommandLine(customCommandLines: JavaList[CustomCommandLine], commandLine: CommandLine): CustomCommandLine = {
     val line = checkNotNull(commandLine)
@@ -276,20 +290,10 @@ trait FlinkSubmitTrait extends Logger {
         }
       })
 
-      //-jvm profile only on yarn support
-      if (Utils.notEmpty(submitRequest.flameGraph) && ExecutionMode.isYarnMode(submitRequest.executionMode)) {
-        val buffer = new StringBuffer()
-        submitRequest.flameGraph.foreach(p => buffer.append(s"${p._1}=${p._2},"))
-        val param = buffer.toString.dropRight(1)
-        array += s"-D${CoreOptions.FLINK_TM_JVM_OPTIONS.key()}=-javaagent:$$PWD/plugins/$jvmProfilerJar=$param"
-      }
-
       // app properties
       if (MapUtils.isNotEmpty(submitRequest.properties)) {
         submitRequest.properties.foreach(x => {
-          if (x._1.startsWith(CoreOptions.FLINK_JVM_OPTIONS.key())) {
-            array += s"-D${x._1}=" + "\"" + x._2 + "\""
-          } else {
+          if (!x._1.startsWith(CoreOptions.FLINK_JVM_OPTIONS.key())) {
             array += s"-D${x._1}=${x._2}"
           }
         })
@@ -388,6 +392,7 @@ trait FlinkSubmitTrait extends Logger {
             processElement(next, false)
           }
         }
+
         processElement(0, false)
         argsArray.foreach(x => programArgs += x.trim)
       }
