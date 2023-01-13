@@ -73,7 +73,7 @@ public interface ApplicationService extends IService<Application> {
 
   void tailMvnDownloading(Long id);
 
-  String upload(MultipartFile file) throws ApplicationException;
+  String upload(MultipartFile file) throws Exception;
 
   /** set the latest to Effective, it will really become the current effective */
   void toEffective(Application application);
@@ -113,4 +113,6 @@ public interface ApplicationService extends IService<Application> {
   List<String> getRecentK8sTmPodTemplate();
 
   List<String> historyUploadJars();
+
+  String k8sStartLog(Long id, Integer offset, Integer limit) throws Exception;
 }

@@ -72,6 +72,7 @@ import org.apache.streampark.console.core.service.EffectiveService;
 import org.apache.streampark.console.core.service.FlinkClusterService;
 import org.apache.streampark.console.core.service.FlinkEnvService;
 import org.apache.streampark.console.core.service.FlinkSqlService;
+import org.apache.streampark.console.core.service.LogClientService;
 import org.apache.streampark.console.core.service.ProjectService;
 import org.apache.streampark.console.core.service.SavePointService;
 import org.apache.streampark.console.core.service.SettingService;
@@ -206,6 +207,8 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
 
   @Autowired private VariableService variableService;
 
+  @Autowired private LogClientService logClient;
+
   @PostConstruct
   public void resetOptionState() {
     this.baseMapper.resetOptionState();
@@ -299,7 +302,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
   }
 
   @Override
-  public String upload(MultipartFile file) throws ApplicationException {
+  public String upload(MultipartFile file) throws Exception {
     File temp = WebUtils.getAppTempDir();
     String fileName = FilenameUtils.getName(Objects.requireNonNull(file.getOriginalFilename()));
     File saveFile = new File(temp, fileName);
@@ -311,7 +314,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     try {
       file.transferTo(saveFile);
     } catch (Exception e) {
-      throw new ApplicationException(e);
+      throw new ApiDetailException(e);
     }
     return saveFile.getAbsolutePath();
   }
@@ -448,8 +451,8 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     if (!FlinkAppState.CANCELED.equals(state)) {
       return false;
     }
-    long cancelUserId = FlinkRESTAPIWatcher.getCanceledJobUserId(appId).longValue();
-    long appUserId = application.getUserId().longValue();
+    long cancelUserId = FlinkRESTAPIWatcher.getCanceledJobUserId(appId);
+    long appUserId = application.getUserId();
     return cancelUserId != -1 && cancelUserId != appUserId;
   }
 
@@ -493,7 +496,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     long now = System.currentTimeMillis();
     List<Application> newRecords =
         records.stream()
-            .map(
+            .peek(
                 record -> {
                   // status of flink job on kubernetes mode had been automatically persisted to db
                   // in time.
@@ -507,7 +510,6 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
                       record.setDuration(now - record.getStartTime().getTime());
                     }
                   }
-                  return record;
                 })
             .collect(Collectors.toList());
     page.setRecords(newRecords);
@@ -578,6 +580,51 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         .filter(fn -> fn.endsWith(".jar"))
         .limit(DEFAULT_HISTORY_RECORD_LIMIT)
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public String k8sStartLog(Long id, Integer offset, Integer limit) throws Exception {
+    Application application = getById(id);
+    AssertUtils.state(application != null);
+    if (ExecutionMode.isKubernetesMode(application.getExecutionModeEnum())) {
+
+      CompletableFuture<String> future =
+          CompletableFuture.supplyAsync(
+              () ->
+                  KubernetesDeploymentHelper.watchDeploymentLog(
+                      application.getK8sNamespace(),
+                      application.getJobName(),
+                      application.getJobId()));
+
+      return future
+          .exceptionally(
+              e -> {
+                String errorLog =
+                    String.format(
+                        "%s/%s_err.log",
+                        WebUtils.getAppTempDir().getAbsolutePath(), application.getJobId());
+                File file = new File(errorLog);
+                if (file.exists() && file.isFile()) {
+                  return file.getAbsolutePath();
+                }
+                return null;
+              })
+          .thenApply(
+              path -> {
+                if (!future.isDone()) {
+                  future.cancel(true);
+                }
+                if (path != null) {
+                  return logClient.rollViewLog(path, offset, limit);
+                }
+                return null;
+              })
+          .toCompletableFuture()
+          .get(5, TimeUnit.SECONDS);
+    } else {
+      throw new ApiAlertException(
+          "job executionMode must be kubernetes-session|kubernetes-application");
+    }
   }
 
   @Override
@@ -1255,7 +1302,6 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
                 IngressController.deleteIngress(
                     application.getK8sNamespace(), application.getJobName());
               }
-              cancelFuture.cancel(true);
               cancelFutureMap.remove(application.getId());
             });
   }
@@ -1559,7 +1605,6 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
             })
         .whenComplete(
             (t, e) -> {
-              future.cancel(true);
               startFutureMap.remove(application.getId());
             });
   }
