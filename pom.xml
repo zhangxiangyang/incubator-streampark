@@ -91,11 +91,16 @@
         <scala.binary.version>2.12</scala.binary.version>
         <scala.xml.version>1.3.0</scala.xml.version>
         <scalatest.version>3.2.9</scalatest.version>
-        <scala.binary.flink.version>_${scala.binary.version}</scala.binary.flink.version>
 
-        <flink.version>1.14.0</flink.version>
+        <flink.version>1.16.0</flink.version>
+        <scala.binary.flink.version/>
+        <streampark.flink.shims.version>1.16</streampark.flink.shims.version>
+        <scala-maven-plugin.version>3.2.2</scala-maven-plugin.version>
+        <flink.table.uber.artifact.id>flink-table-api-java-uber</flink.table.uber.artifact.id>
+        <flink-table-api-java-bridge.artifact.id>flink-table-api-java-bridge</flink-table-api-java-bridge.artifact.id>
+        <flink.streaming.java>flink-streaming-java</flink.streaming.java>
+
         <flink.shaded.version>1.8.1</flink.shaded.version>
-        <streampark.flink.shims.version>1.14</streampark.flink.shims.version>
         <spark.version>3.2.0</spark.version>
         <scalikejdbc.version>4.0.0</scalikejdbc.version>
         <hive.version>2.3.4</hive.version>
@@ -137,7 +142,6 @@
         <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
         <scalastyle.fails.on.error>true</scalastyle.fails.on.error>
         <streampark.shaded.package>org.apache.streampark.shaded</streampark.shaded.package>
-        <flink.table.uber.artifact.id>flink-table-uber_${scala.binary.version}</flink.table.uber.artifact.id>
         <httpclient.version>4.5.13</httpclient.version>
         <lombok.version>1.18.24</lombok.version>
         <jupiter.version>5.9.1</jupiter.version>
@@ -147,6 +151,19 @@
         <CodeCacheSize>512m</CodeCacheSize>
         <MaxMetaspace>512m</MaxMetaspace>
     </properties>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>Snapshots</name>
+            <url>http://192.168.116.40:8088/repository/maven-snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>releases</id>
+            <name>Releases</name>
+            <url>http://192.168.116.40:8088/repository/maven-releases/</url>
+        </repository>
+    </distributionManagement>
 
     <dependencyManagement>
 
