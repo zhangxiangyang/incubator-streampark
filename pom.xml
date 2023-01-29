@@ -167,7 +167,7 @@
 
     <repositories>
         <repository>
-            <id>nexus</id>
+            <id>nexus-release</id>
             <url>http://192.168.116.40:8088/repository/maven-public/</url>
             <releases>
                 <enabled>true</enabled>
@@ -177,6 +177,21 @@
             </snapshots>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>nexus-release</id>
+            <url>http://192.168.116.40:8088/repository/maven-public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+
 
     <dependencyManagement>
         <dependencies>
