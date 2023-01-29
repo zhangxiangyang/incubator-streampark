@@ -164,15 +164,18 @@
             <url>http://192.168.116.40:8088/repository/maven-releases/</url>
         </repository>
     </distributionManagement>
+
     <repositories>
         <repository>
             <id>releases</id>
             <url>http://192.168.116.40:8088/repository/maven-releases/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
+        </repository>
+        <repository>
+            <id>snapshots</id>
+            <url>http://192.168.116.40:8088/repository/maven-snapshots/</url>
             <snapshots>
                 <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
     </repositories>
