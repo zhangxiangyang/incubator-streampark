@@ -191,23 +191,6 @@ private[flink] class FlinkTableInitializer(args: Array[String], apiType: ApiType
   def initEnvironment(tableMode: TableMode): Unit = {
     val builder = EnvironmentSettings.newInstance()
     val parameter = configuration.parameter
-    val plannerType = Try(PlannerType.withName(parameter.get(KEY_FLINK_TABLE_PLANNER))).getOrElse(PlannerType.blink)
-
-    try {
-      plannerType match {
-        case PlannerType.blink =>
-          logInfo("blinkPlanner will be use.")
-          builder.useBlinkPlanner()
-        case PlannerType.old =>
-          logInfo("oldPlanner will be use.")
-          builder.useOldPlanner()
-        case PlannerType.any =>
-          logInfo("anyPlanner will be use.")
-          builder.useAnyPlanner()
-      }
-    } catch {
-      case e: IncompatibleClassChangeError =>
-    }
 
     val mode = Try(TableMode.withName(parameter.get(KEY_FLINK_TABLE_MODE))).getOrElse(tableMode)
     mode match {

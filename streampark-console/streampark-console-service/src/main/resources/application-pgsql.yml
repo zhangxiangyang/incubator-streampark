@@ -18,6 +18,6 @@
 spring:
   datasource:
     username: postgres
-    password: streampark
+    password: postgres
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/streampark?stringtype=unspecified

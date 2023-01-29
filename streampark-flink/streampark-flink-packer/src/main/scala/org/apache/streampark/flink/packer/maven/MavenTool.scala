@@ -27,6 +27,7 @@ import scala.util.Try
 
 import com.google.common.collect.Lists
 import org.apache.maven.plugins.shade.{DefaultShader, ShadeRequest}
+import org.apache.maven.plugins.shade.filter.{Filter, SimpleFilter}
 import org.apache.maven.plugins.shade.resource.{ManifestResourceTransformer, ResourceTransformer, ServicesResourceTransformer}
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils
 import org.codehaus.plexus.logging.{Logger => PlexusLog}
@@ -99,7 +100,6 @@ object MavenTool extends Logger {
       val req = new ShadeRequest
       req.setJars(jarSet)
       req.setUberJar(uberJar)
-      req.setFilters(Lists.newArrayList())
 
       val transformer = ArrayBuffer[ResourceTransformer]()
       // ref https://ci.apache.org/projects/flink/flink-docs-master/docs/connectors/table/overview/#transform-table-connectorformat-resources
@@ -109,8 +109,13 @@ object MavenTool extends Logger {
         manifest.setMainClass(mainClass)
         transformer += manifest
       }
+      val filter = ArrayBuffer[Filter]()
+      val excludes = Set("META-INF/*.SF", "META-INF/*.RSA", "META-INF/*.DSA")
+      val simpleFilter = new SimpleFilter(jarSet, new util.HashSet[String], excludes);
+      filter += simpleFilter
       req.setResourceTransformers(transformer.toList)
       req.setRelocators(Lists.newArrayList())
+      req.setFilters(filter.toList)
       req
     }
     val shader = new DefaultShader()
@@ -150,7 +155,9 @@ object MavenTool extends Logger {
     if (mavenArtifacts == null) Set.empty[File];
     else {
       val (repoSystem, session) = getMavenEndpoint()
-      val artifacts = mavenArtifacts.map(e => new DefaultArtifact(e.groupId, e.artifactId, "jar", e.version))
+      val artifacts = mavenArtifacts.map(e => {
+        new DefaultArtifact(e.groupId, e.artifactId, e.classifier, "jar", e.version)
+      })
       logInfo(s"start resolving dependencies: ${artifacts.mkString}")
 
       val remoteRepos = getRemoteRepos()
