@@ -161,6 +161,7 @@ object MavenTool extends Logger {
       logInfo(s"start resolving dependencies: ${artifacts.mkString}")
 
       val remoteRepos = getRemoteRepos()
+      logInfo(s"remoteRepos:$remoteRepos ")
       // read relevant artifact descriptor info
       // plz don't simplify the following lambda syntax to maintain the readability of the code.
       val resolvedArtifacts = artifacts
