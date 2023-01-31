@@ -68,6 +68,20 @@ else
   RESET=""
 fi
 
+JAVA_OPTS="""
+  $vmOption
+  -ea
+  -server
+  -Xms1024m
+  -Xmx1024m
+  -Xmn256m
+  -XX:NewSize=100m
+  -XX:+UseConcMarkSweepGC
+  -XX:CMSInitiatingOccupancyFraction=70
+  -XX:ThreadStackSize=512
+  -Xloggc:${APP_HOME}/logs/gc.log
+  """
+
 echo_r () {
     # Color red: Error, Failed
     [[ $# -ne 1 ]] && return 1
@@ -352,21 +366,9 @@ start() {
   # shellcheck disable=SC2034
   # shellcheck disable=SC2006
   vmOption=`$RUNJAVA -cp "$APP_CLASSPATH" $PARAM_CLI --vmopt`
-
-  JAVA_OPTS="""
-  $vmOption
-  -ea
-  -server
-  -Xms1024m
-  -Xmx1024m
-  -Xmn256m
-  -XX:NewSize=100m
-  -XX:+UseConcMarkSweepGC
-  -XX:CMSInitiatingOccupancyFraction=70
-  -XX:ThreadStackSize=512
-  -Xloggc:${APP_HOME}/logs/gc.log
-  """
-
+  echo "*********************************************************************"
+  echo $JAVA_OPTS
+  echo "*********************************************************************"
   eval $NOHUP "\"$RUNJAVA\"" $JAVA_OPTS \
     -classpath "\"$APP_CLASSPATH\"" \
     -Dapp.home="\"${APP_HOME}\"" \
@@ -402,6 +404,14 @@ start() {
    else
       echo_r "StreamPark start failed."
    fi
+}
+
+debug() {
+  JAVA_OPTS="""
+  $JAVA_OPTS
+  -Xdebug  -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=10002
+  """
+  start
 }
 
 # shellcheck disable=SC2120
@@ -554,6 +564,9 @@ restart() {
 main() {
   print_logo
   case "$1" in
+    "debug")
+        debug
+        ;;
     "start")
         start
         ;;
@@ -573,6 +586,7 @@ main() {
         echo_w "  start \$conf               Start StreamPark with application config."
         echo_w "  stop n -force             Stop StreamPark, wait up to n seconds and then use kill -KILL if still running"
         echo_w "  status                    StreamPark status"
+        echo_w "  debug                     StreamPark start with debug mode,remote debugger port: 10002"
         echo_w "  restart \$conf             restart StreamPark with application config."
         exit 0
         ;;
