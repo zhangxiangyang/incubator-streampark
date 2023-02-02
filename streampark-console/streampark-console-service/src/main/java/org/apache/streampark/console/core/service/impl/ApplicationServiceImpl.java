@@ -34,6 +34,7 @@ import org.apache.streampark.common.util.HadoopUtils;
 import org.apache.streampark.common.util.ThreadUtils;
 import org.apache.streampark.common.util.Utils;
 import org.apache.streampark.common.util.YarnUtils;
+import org.apache.streampark.console.base.domain.Constant;
 import org.apache.streampark.console.base.domain.RestRequest;
 import org.apache.streampark.console.base.exception.ApiAlertException;
 import org.apache.streampark.console.base.exception.ApiDetailException;
@@ -369,42 +370,37 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
 
     Application application = getById(paramApp.getId());
 
-    try {
-      // 1) remove flink sql
-      flinkSqlService.removeApp(application.getId());
+    // 1) remove flink sql
+    flinkSqlService.removeApp(application.getId());
 
-      // 2) remove log
-      applicationLogService.removeApp(application.getId());
+    // 2) remove log
+    applicationLogService.removeApp(application.getId());
 
-      // 3) remove config
-      configService.removeApp(application.getId());
+    // 3) remove config
+    configService.removeApp(application.getId());
 
-      // 4) remove effective
-      effectiveService.removeApp(application.getId());
+    // 4) remove effective
+    effectiveService.removeApp(application.getId());
 
-      // remove related hdfs
-      // 5) remove backup
-      backUpService.removeApp(application);
+    // remove related hdfs
+    // 5) remove backup
+    backUpService.removeApp(application);
 
-      // 6) remove savepoint
-      savePointService.removeApp(application);
+    // 6) remove savepoint
+    savePointService.removeApp(application);
 
-      // 7) remove BuildPipeline
-      appBuildPipeService.removeApp(application.getId());
+    // 7) remove BuildPipeline
+    appBuildPipeService.removeApp(application.getId());
 
-      // 8) remove app
-      removeApp(application);
+    // 8) remove app
+    removeApp(application);
 
-      if (isKubernetesApp(paramApp)) {
-        k8SFlinkTrackMonitor.unWatching(toTrackId(application));
-      } else {
-        FlinkRESTAPIWatcher.unWatching(paramApp.getId());
-      }
-      return true;
-    } catch (Exception e) {
-      log.error(e.getMessage(), e);
-      throw e;
+    if (isKubernetesApp(paramApp)) {
+      k8SFlinkTrackMonitor.unWatching(toTrackId(application));
+    } else {
+      FlinkRESTAPIWatcher.unWatching(paramApp.getId());
     }
+    return true;
   }
 
   @Override
@@ -459,9 +455,15 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
   private void removeApp(Application application) {
     Long appId = application.getId();
     removeById(appId);
-    application
-        .getFsOperator()
-        .delete(application.getWorkspace().APP_WORKSPACE().concat("/").concat(appId.toString()));
+    try {
+      application
+          .getFsOperator()
+          .delete(application.getWorkspace().APP_WORKSPACE().concat("/").concat(appId.toString()));
+    } catch (Exception e) {
+      if (!application.getId().equals(Constant.FLINK_SAMPLE_APP_ID)) {
+        throw e;
+      }
+    }
     try {
       // try to delete yarn-application, and leave no trouble.
       String path =
