@@ -366,9 +366,6 @@ start() {
   # shellcheck disable=SC2034
   # shellcheck disable=SC2006
   vmOption=`$RUNJAVA -cp "$APP_CLASSPATH" $PARAM_CLI --vmopt`
-  echo "*********************************************************************"
-  echo $JAVA_OPTS
-  echo "*********************************************************************"
   eval $NOHUP "\"$RUNJAVA\"" $JAVA_OPTS \
     -classpath "\"$APP_CLASSPATH\"" \
     -Dapp.home="\"${APP_HOME}\"" \
